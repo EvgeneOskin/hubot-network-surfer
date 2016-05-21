@@ -24,39 +24,36 @@ class AccountMACBinder
 
 class SubNetSurfer
   constructor: (@robot, @network) ->
-    @schedulerId = null
-    @countDown = 30*1000
     @brainKey = 'live_macs'
     @subnet = '192.168.1.'
 
   startSurf: () ->
-    that = @
-    clearTimeout(@schedulerId) if @schedulerId
-    @schedulerId = setInterval () ->
-      console.log('Start surfing')
-      Promise.map [1..255], (i) ->
-        that.subnet + i.toString()
-      .map (i) ->
-        console.log(i)
-        that.network.getMACByIP(i)
-        .then (mac) -> total.add mac
-        .catch () ->
-      .filter (mac) ->
-        console.log(mac)
-        mac isnt '(incomplete)'
-      .then (live_macs) ->
-        console.log(live_macs)
-        that.updateMacs(live_macs)
-        @robot.emit("macs_updated", that)
-      .catch (err) ->
-        console.log(err)
-    , @countDown
+    console.log('Start surfing')
+    Promise.map [1..255], (i) =>
+      @generateIp(i)
+    .map (i) =>
+      @network.getMACByIP(i)
+      .then (mac) ->
+        mac
+      .catch () ->
+    .filter (mac) ->
+      mac isnt '(incomplete)'
+    .then (live_macs) =>
+      @updateMacs(live_macs)
+      @robot.emit("macs_updated", @)
+    .catch (err) =>
+      console.log(err)
+      @robot.emit("macs_updated", @)
+
+  generateIp: (i) ->
+    @subnet + i.toString()
 
   updateMacs: (live_macs) ->
-    old_live_macs = @robot.brain.get @brainKey or new Set()
-    old_live_macs.forEach (mac) ->
+    live_macs = live_macs or new Set()
+    old_live_macs = @robot.brain.get(@brainKey) or new Set()
+    old_live_macs.forEach (mac) =>
       @robot.emit("mac_down", mac) if not live_macs.has(mac)
-    live_macs.forEach (mac) ->
+    live_macs.forEach (mac) =>
       @robot.emit("mac_up", mac) if not old_live_macs.has(mac)
     @robot.brain.set @brainKey, live_macs
 
@@ -72,6 +69,7 @@ module.exports = (robot) ->
   network = new Network()
   surfer = new SubNetSurfer(robot, network)
   surfer.startSurf()
+  surfCountDown = 1000
 
   robot.on "mac_down", (mac) ->
     console.log "#{mac} down"
@@ -79,8 +77,10 @@ module.exports = (robot) ->
   robot.on "mac_up", (mac) ->
     console.log "#{mac} up"
 
-  robot.on "mac_updated", (surfer) ->
-    surfer.startSurf()
+  robot.on "macs_updated", (surfer) ->
+    setTimeout () ->
+      surfer.startSurf()
+    , surfCountDown
 
   robot.router.post '/hubot/in/network/register/', (req, res) ->
     data = if req.body.payload? then JSON.parse req.body.payload else req.body
