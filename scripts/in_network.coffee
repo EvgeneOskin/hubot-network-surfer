@@ -5,7 +5,8 @@
 #   SURFER_SUBNET_WITH_MASK - ip address with subnet mask, ie 192.168.1.0/24
 #
 # Commands:
-#  ping when <user_id> come to office - send private message when user with <user_id> come to office
+#  hubot ping me when <user_id> come to office - send private message when user with <user_id> come to office
+#  hubot register me
 #
 # Notes:
 #   They are commented out by default, because most of them are pretty silly and
@@ -16,6 +17,7 @@ Promise = require "bluebird"
 arp = Promise.promisifyAll require 'node-arp'
 ping = Promise.promisifyAll require("net-ping")
 IpSubnetCalculator = require 'ip-subnet-calculator'
+suid = require('rand-token').suid
 
 class UserIDMACBinder
   constructor: (@robot) ->
@@ -57,9 +59,6 @@ class SubNetSurfer
       console.log(err)
       @robot.emit("macs_updated", @)
 
-  generateIp: (i) ->
-    @subnet + i.toString()
-
   updateMacs: (live_macs) ->
     live_macs = new Set(live_macs)
     old_live_macs = @robot.brain.get(@brainKey) or new Set()
@@ -92,7 +91,7 @@ class Network
 
 class Notifier
 
-  brainKey = 'track_notifier'
+  brainKey = 'track_notifier_'
 
   constructor: (@robot, @binder) ->
 
@@ -114,7 +113,7 @@ class Notifier
       @robot.send user, "#{who} come to office!"
 
   renderKey: (who) ->
-    @brainKey + who
+    brainKey + who
 
   getMessageUser: (res) ->
     res.message.user.id
@@ -124,10 +123,45 @@ class Notifier
     userID if user
 
 
+class TokenGenerator
+
+  brainKey = 'reg_token_'
+  tokenSize = 16
+  tokenLifeTime = 120*1000
+
+  constructor: (@robot) ->
+
+  generate: (user) ->
+    token = suid(tokenSize)
+    key = @getKey token
+    @robot.brain.set key, user
+    setTimeout () =>
+      @robot.brain.remove key
+    , tokenLifeTime
+    token
+
+  getKey: (token) ->
+    brainKey + token
+
+  getUser: (token) ->
+    key = @getKey token
+    user = @robot.brain.get key
+    @robot.brain.remove key
+    user
+
+
 module.exports = (robot) ->
 
   surfCountDown = 1000
   subnet = process.env.SURFER_SUBNET_WITH_MASK
+  publicPort = (process.env.EXPRESS_PORT or 8080)
+  if publicPort is 80
+    publicHostname = process.env.EXPRESS_BIND_ADDRESS
+  else
+    publicHostname = process.env.EXPRESS_BIND_ADDRESS + ":#{publicPort}"
+  trustProxy = process.env.TRUST_PROXY
+
+  tokenGenerator = new TokenGenerator(robot)
   binder = new UserIDMACBinder(robot)
   network = new Network()
   notifier = new Notifier(robot, binder)
@@ -146,27 +180,39 @@ module.exports = (robot) ->
       surfer.startSurf()
     , surfCountDown
 
-  robot.router.post '/hubot/in/network/register/', (req, res) ->
-    data = if req.body.payload? then JSON.parse req.body.payload else req.body
-    {user_id: userID, ip: ip} = data
-    userID = notifier.getRegistrationUser(userID)
-    if not (ip and user_id) or not userID
-      res.send JSON.stringify
-        error: 'ip or user_id missed or invalid user'
-      return
-
-    network.getMACByIP(ip).then (mac) ->
-      if mac is '(incomplete)'
-        console.log "Fail to register: ip #{ip}, user_id #{userID}"
-        return
-      binder.bind(mac, userID)
-    res.send '{}'
-
-  robot.respond /ping when (.*) come to office/i, (res) ->
+  robot.respond /ping me when (.*) come to office/i, (res) ->
     username = res.match[1]
-    author = notifier.getMessageUser(res)
-    user = notifier.getRegistrationUser(username)
+    author = notifier.getMessageUser res
+    user = notifier.getRegistrationUser username
     if user
       notifier.track user, author
     else
       res.reply 'No such user.'
+
+  robot.respond /register me/i, (res) ->
+    token = tokenGenerator.generate notifier.getMessageUser res
+    url = "http://#{publicHostname}/hubot/register/#{token}/"
+    res.reply "Please, open link on your device #{url}"
+
+  robot.router.set 'trust proxy', trustProxy
+
+  robot.router.get '/hubot/register/:token/', (req, res) ->
+    userID = tokenGenerator.getUser req.params.token
+    ip = req.ip
+    if not ip
+      res.send 'Can not detect your IP.'
+      return
+    if not userID
+      res.send 'Token invalid.'
+      return
+
+    network.getMACByIP(ip)
+    .then (mac) ->
+      if mac isnt '(incomplete)'
+        binder.bind mac, userID
+        robot.send notifier.getRegistrationUser(userID), "#{mac} was added."
+      else
+        console.log "Fail to register: ip #{ip}, user_id #{userID}"
+    .catch (err) ->
+      console.log "Fail to register: ip #{ip}, user_id #{userID}\n #{err}"
+    res.send '{}'

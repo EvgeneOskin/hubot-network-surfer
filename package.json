@@ -24,6 +24,7 @@
     "net-ping": "^1.2.0",
     "net-snmp": "^1.1.18",
     "node-arp": "^1.0.5",
+    "rand-token": "^0.2.1",
     "snmp-native": "^1.0.21"
   },
   "engines": {
