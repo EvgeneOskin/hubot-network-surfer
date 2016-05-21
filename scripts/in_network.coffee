@@ -1,6 +1,9 @@
 # Description:
 #   Example scripts for you to examine and try out.
 #
+# Configuration:
+#   SURFER_SUBNET_WITH_MASK - ip address with subnet mask, ie 192.168.1.0/24
+#
 # Commands:
 #  ping when <user_id> come to office - send private message when user with <user_id> come to office
 #
@@ -12,6 +15,7 @@
 Promise = require "bluebird"
 arp = Promise.promisifyAll require 'node-arp'
 ping = Promise.promisifyAll require("net-ping")
+IpSubnetCalculator = require 'ip-subnet-calculator'
 
 class UserIDMACBinder
   constructor: (@robot) ->
@@ -28,14 +32,12 @@ class UserIDMACBinder
 
 
 class SubNetSurfer
-  constructor: (@robot, @network) ->
+  constructor: (@robot, @network, @subnet) ->
     @brainKey = 'live_macs'
-    @subnet = '192.168.0.'
 
   startSurf: () ->
     console.log('Start surfing')
-    Promise.map [1..255], (i) =>
-      @generateIp(i)
+    @network.mapIpWithMask(@subnet)
     .map (ip) =>
       @network.pingIP(ip).then () ->
         ip
@@ -78,6 +80,15 @@ class Network
   pingIP: (ip) ->
     pingSession.pingHostAsync ip
 
+  ipRange: (ipWithMask) ->
+    [ip, mask] = ipWithMask.split('/')
+    IpSubnetCalculator.calculateSubnetMask(ip, mask)
+
+  mapIpWithMask: (ipWithMask) ->
+    range = @ipRange(ipWithMask)
+    Promise.map [range.ipLow..range.ipHigh], (ipDecimal) ->
+      IpSubnetCalculator.toString(ipDecimal)
+
 
 class Notifier
 
@@ -115,12 +126,13 @@ class Notifier
 
 module.exports = (robot) ->
 
+  surfCountDown = 1000
+  subnet = process.env.SURFER_SUBNET_WITH_MASK
   binder = new UserIDMACBinder(robot)
   network = new Network()
   notifier = new Notifier(robot, binder)
-  surfer = new SubNetSurfer(robot, network)
+  surfer = new SubNetSurfer(robot, network, subnet)
   surfer.startSurf()
-  surfCountDown = 1000
 
   robot.on "mac_down", (mac) ->
     console.log "#{mac} down"
