@@ -5,8 +5,8 @@
 #   SURFER_SUBNET_WITH_MASK - ip address with subnet mask, ie 192.168.1.0/24
 #
 # Commands:
-#  hubot ping me when <user_id> come to office - send private message when user with <user_id> come to office
-#  hubot register me
+#  hubot ping me when <user_id> come to office - send private message when <user_id> come to office
+#  hubot register me - render the link to register personaldevice
 #
 # Notes:
 #   They are commented out by default, because most of them are pretty silly and
