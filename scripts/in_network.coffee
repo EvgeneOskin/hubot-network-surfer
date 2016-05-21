@@ -9,7 +9,7 @@
 Promise = require "bluebird"
 arp = Promise.promisifyAll require 'node-arp'
 
-class MACBinder
+class AccountMACBinder
   constructor: (@robot) ->
     @key = 'local_network_macs'
 
@@ -23,9 +23,9 @@ class MACBinder
 
 
 class SubNetSurfer
-  constructor: (@robot) ->
+  constructor: (@robot, @network) ->
     @schedulerId = null
-    @countDown = 3*1000
+    @countDown = 30*1000
     @brainKey = 'live_macs'
     @subnet = '192.168.1.'
 
@@ -33,16 +33,19 @@ class SubNetSurfer
     that = @
     clearTimeout(@schedulerId) if @schedulerId
     @schedulerId = setInterval () ->
+      console.log('Start surfing')
       Promise.map [1..255], (i) ->
         that.subnet + i.toString()
-      .mapSeries(i) ->
-        arp.getMACAsync(i)
+      .map (i) ->
+        console.log(i)
+        that.network.getMACByIP(i)
         .then (mac) -> total.add mac
         .catch () ->
       .filter (mac) ->
-        console.log mac
+        console.log(mac)
         mac isnt '(incomplete)'
       .then (live_macs) ->
+        console.log(live_macs)
         that.updateMacs(live_macs)
         @robot.emit("macs_updated", that)
       .catch (err) ->
@@ -58,10 +61,16 @@ class SubNetSurfer
     @robot.brain.set @brainKey, live_macs
 
 
+class Network
+  getMACByIP: (ip) ->
+    arp.getMACAsync(ip)
+
+
 module.exports = (robot) ->
 
-  binder = new MACBinder(robot)
-  surfer = new SubNetSurfer(robot)
+  binder = new AccountMACBinder(robot)
+  network = new Network()
+  surfer = new SubNetSurfer(robot, network)
   surfer.startSurf()
 
   robot.on "mac_down", (mac) ->
@@ -82,7 +91,7 @@ module.exports = (robot) ->
         error: 'ip or account missed'
       return
 
-    arp.getMACAsync(ip).then (mac) ->
+    network.getMACByIP(ip).then (mac) ->
       if mac is '(incomplete)'
         console.log "Fail to register: ip #{ip}, account #{account}"
         return
