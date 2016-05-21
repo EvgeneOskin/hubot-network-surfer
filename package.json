@@ -1,9 +1,9 @@
 {
-  "name": "hubot-snmp-walk",
+  "name": "hubot-network-surfer",
   "version": "0.0.0",
   "private": true,
   "author": "EvgeneOskin <eoskin@crystalnix.com>",
-  "description": "A simple helpful robot for your Company",
+  "description": "A bot to get ping about the new user in office.",
   "dependencies": {
     "bluebird": "^3.4.0",
     "hubot": "^2.19.0",
@@ -20,8 +20,11 @@
     "hubot-shipit": "^0.2.0",
     "hubot-slack": "^3.4.2",
     "hubot-youtube": "^1.0.2",
+    "ip-subnet-calculator": "^1.1.7",
+    "net-ping": "^1.2.0",
     "net-snmp": "^1.1.18",
     "node-arp": "^1.0.5",
+    "rand-token": "^0.2.1",
     "snmp-native": "^1.0.21"
   },
   "engines": {
