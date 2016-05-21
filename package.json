@@ -5,6 +5,7 @@
   "author": "EvgeneOskin <eoskin@crystalnix.com>",
   "description": "A simple helpful robot for your Company",
   "dependencies": {
+    "bluebird": "^3.4.0",
     "hubot": "^2.19.0",
     "hubot-diagnostics": "0.0.1",
     "hubot-google-images": "^0.2.6",
@@ -19,6 +20,8 @@
     "hubot-shipit": "^0.2.0",
     "hubot-slack": "^3.4.2",
     "hubot-youtube": "^1.0.2",
+    "net-snmp": "^1.1.18",
+    "node-arp": "^1.0.5",
     "snmp-native": "^1.0.21"
   },
   "engines": {
