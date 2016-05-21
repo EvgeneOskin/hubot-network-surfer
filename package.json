@@ -20,6 +20,7 @@
     "hubot-shipit": "^0.2.0",
     "hubot-slack": "^3.4.2",
     "hubot-youtube": "^1.0.2",
+    "net-ping": "^1.2.0",
     "net-snmp": "^1.1.18",
     "node-arp": "^1.0.5",
     "snmp-native": "^1.0.21"

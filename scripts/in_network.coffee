@@ -11,6 +11,7 @@
 
 Promise = require "bluebird"
 arp = Promise.promisifyAll require 'node-arp'
+ping = Promise.promisifyAll require("net-ping")
 
 class UserIDMACBinder
   constructor: (@robot) ->
@@ -22,25 +23,31 @@ class UserIDMACBinder
     @robot.brain.set @key, mac
 
   getByMAC: (mac) ->
-    @robot.brain.get(@key)[mac]
+    macs = @robot.brain.get(@key) or {}
+    macs[mac]
 
 
 class SubNetSurfer
   constructor: (@robot, @network) ->
     @brainKey = 'live_macs'
-    @subnet = '192.168.1.'
+    @subnet = '192.168.0.'
 
   startSurf: () ->
     console.log('Start surfing')
     Promise.map [1..255], (i) =>
       @generateIp(i)
-    .map (i) =>
-      @network.getMACByIP(i)
+    .map (ip) =>
+      @network.pingIP(ip).then () ->
+        ip
+      .catch(()->)
+    .filter((ip) -> ip)
+    .map (ip) =>
+      @network.getMACByIP(ip)
       .then (mac) ->
-        mac
+        {ip: ip, mac: mac}
       .catch () ->
-    .filter (mac) ->
-      mac isnt '(incomplete)'
+    .filter((ip_mac) -> ip_mac.mac isnt '(incomplete)')
+    .map((ip_mac) -> ip_mac.mac)
     .then (live_macs) =>
       @updateMacs(live_macs)
       @robot.emit("macs_updated", @)
@@ -52,7 +59,7 @@ class SubNetSurfer
     @subnet + i.toString()
 
   updateMacs: (live_macs) ->
-    live_macs = live_macs or new Set()
+    live_macs = new Set(live_macs)
     old_live_macs = @robot.brain.get(@brainKey) or new Set()
     old_live_macs.forEach (mac) =>
       @robot.emit("mac_down", mac) if not live_macs.has(mac)
@@ -62,8 +69,14 @@ class SubNetSurfer
 
 
 class Network
+
+  pingSession = ping.createSession()
+
   getMACByIP: (ip) ->
-    arp.getMACAsync(ip)
+    arp.getMACAsync ip
+
+  pingIP: (ip) ->
+    pingSession.pingHostAsync ip
 
 
 class Notifier
@@ -106,7 +119,7 @@ module.exports = (robot) ->
   network = new Network()
   notifier = new Notifier(robot, binder)
   surfer = new SubNetSurfer(robot, network)
-  #surfer.startSurf()
+  surfer.startSurf()
   surfCountDown = 1000
 
   robot.on "mac_down", (mac) ->
