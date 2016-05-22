@@ -19,9 +19,9 @@ class UserIDMACBinder
   constructor: (@robot) ->
 
   bind: (mac, userID) ->
-    network_macs = @robot.brain.get(key) or {}
-    network_macs[mac] = userID
-    @robot.brain.set key, mac
+    networkMACs = @robot.brain.get(key) or {}
+    networkMACs[mac] = userID
+    @robot.brain.set key, networkMACs
 
   getByMAC: (mac) ->
     macs = @robot.brain.get(key) or {}
@@ -45,7 +45,7 @@ class SubNetSurfer
       .then (mac) ->
         {ip: ip, mac: mac}
       .catch () ->
-    .filter((ip_mac) -> ip_mac.mac isnt '(incomplete)')
+    .filter((ip_mac) -> ip_mac and ip_mac.mac isnt '(incomplete)')
     .map((ip_mac) -> ip_mac.mac)
     .then (live_macs) =>
       @updateMacs(live_macs)
@@ -211,4 +211,4 @@ module.exports = (robot) ->
         console.log "Fail to register: ip #{ip}, user_id #{userID}"
     .catch (err) ->
       console.log "Fail to register: ip #{ip}, user_id #{userID}\n #{err}"
-    res.send '{}'
+    res.send 'Register user.'
