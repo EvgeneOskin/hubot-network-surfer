@@ -111,6 +111,7 @@ class Notifier
     for i in trakers
       user = @robot.brain.userForId i
       @robot.send user, "#{who} come to office!"
+    @robot.brain.remove key
 
   renderKey: (who) ->
     brainKey + who
