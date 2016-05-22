@@ -20,16 +20,18 @@ IpSubnetCalculator = require 'ip-subnet-calculator'
 suid = require('rand-token').suid
 
 class UserIDMACBinder
+
+  key = 'local_network_macs'
+
   constructor: (@robot) ->
-    @key = 'local_network_macs'
 
   bind: (mac, userID) ->
-    network_macs = @robot.brain.get(@key) or {}
+    network_macs = @robot.brain.get(key) or {}
     network_macs[mac] = userID
-    @robot.brain.set @key, mac
+    @robot.brain.set key, mac
 
   getByMAC: (mac) ->
-    macs = @robot.brain.get(@key) or {}
+    macs = @robot.brain.get(key) or {}
     macs[mac]
 
 
