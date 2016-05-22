@@ -1,38 +1,36 @@
 {
   "name": "hubot-network-surfer",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "author": "EvgeneOskin <eoskin@crystalnix.com>",
   "description": "A bot to get ping about the new user in office.",
+  "scripts": {
+    "test": "mocha --compilers coffee:coffee-script/register test",
+    "release-pre": "semantic-release pre",
+    "release-post": "semantic-release post"
+  },
   "dependencies": {
     "bluebird": "^3.4.0",
     "hubot": "^2.19.0",
-    "hubot-diagnostics": "0.0.1",
-    "hubot-google-images": "^0.2.6",
-    "hubot-google-translate": "^0.2.0",
     "hubot-help": "^0.2.0",
     "hubot-heroku-keepalive": "^1.0.2",
-    "hubot-maps": "0.0.2",
-    "hubot-pugme": "^0.1.0",
     "hubot-redis-brain": "0.0.3",
-    "hubot-rules": "^0.1.1",
     "hubot-scripts": "^2.17.2",
-    "hubot-shipit": "^0.2.0",
     "hubot-slack": "^3.4.2",
-    "hubot-youtube": "^1.0.2",
     "ip-subnet-calculator": "^1.1.7",
     "net-ping": "^1.2.0",
     "net-snmp": "^1.1.18",
     "node-arp": "^1.0.5",
-    "rand-token": "^0.2.1",
-    "snmp-native": "^1.0.21"
+    "rand-token": "^0.2.1"
   },
   "engines": {
     "node": "0.10.x"
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "coffee-script": "^1.10.0",
     "hubot-test-helper": "^1.4.4",
-    "mocha": "^2.4.5"
+    "mocha": "^2.4.5",
+    "request-promise": "^3.0.0"
   }
 }
