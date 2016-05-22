@@ -5,7 +5,7 @@
 #   SURFER_SUBNET_WITH_MASK - ip address with subnet mask, ie 192.168.1.0/24
 #
 # Commands:
-#  hubot ping me when <user_id> come to office - send private message when <user_id> come to office
+#  hubot ping me when <username> come to the office - send private message when <user_id> come to office
 #  hubot register me - render the link to register personaldevice
 #
 # Notes:
@@ -20,16 +20,18 @@ IpSubnetCalculator = require 'ip-subnet-calculator'
 suid = require('rand-token').suid
 
 class UserIDMACBinder
+
+  key = 'local_network_macs'
+
   constructor: (@robot) ->
-    @key = 'local_network_macs'
 
   bind: (mac, userID) ->
-    network_macs = @robot.brain.get(@key) or {}
+    network_macs = @robot.brain.get(key) or {}
     network_macs[mac] = userID
-    @robot.brain.set @key, mac
+    @robot.brain.set key, mac
 
   getByMAC: (mac) ->
-    macs = @robot.brain.get(@key) or {}
+    macs = @robot.brain.get(key) or {}
     macs[mac]
 
 
@@ -110,7 +112,8 @@ class Notifier
     trackers = @robot.brain.get(key, new Set())
     for i in trakers
       user = @robot.brain.userForId i
-      @robot.send user, "#{who} come to office!"
+      @robot.send user, "#{who} come to the office!"
+    @robot.brain.remove key
 
   renderKey: (who) ->
     brainKey + who
@@ -180,7 +183,7 @@ module.exports = (robot) ->
       surfer.startSurf()
     , surfCountDown
 
-  robot.respond /ping me when (.*) come to office/i, (res) ->
+  robot.respond /ping me when (.*) come to the office/i, (res) ->
     username = res.match[1]
     author = notifier.getMessageUser res
     user = notifier.getRegistrationUser username
@@ -210,7 +213,7 @@ module.exports = (robot) ->
     .then (mac) ->
       if mac isnt '(incomplete)'
         binder.bind mac, userID
-        robot.send notifier.getRegistrationUser(userID), "#{mac} was added."
+        robot.send robot.brain.userForId(userID), "#{mac} was added."
       else
         console.log "Fail to register: ip #{ip}, user_id #{userID}"
     .catch (err) ->
