@@ -1,17 +1,10 @@
-# Description:
-#   Example scripts for you to examine and try out.
-#
 # Configuration:
-#   SURFER_SUBNET_WITH_MASK - ip address with subnet mask, ie 192.168.1.0/24
+#  SURFER_SUBNET_WITH_MASK - ip address with subnet mask, ie 192.168.1.0/24
 #
 # Commands:
 #  hubot ping me when <username> come to the office - send private message when <user_id> come to office
 #  hubot register me - render the link to register personaldevice
 #
-# Notes:
-#   They are commented out by default, because most of them are pretty silly and
-#   wouldn't be useful and amusing enough for day to day huboting.
-#   Uncomment the ones you want to try and experiment with.
 
 Promise = require "bluebird"
 arp = Promise.promisifyAll require 'node-arp'
