@@ -211,7 +211,7 @@ module.exports = (robot) ->
     .then (mac) ->
       if mac isnt '(incomplete)'
         binder.bind mac, userID
-        robot.send notifier.getRegistrationUser(userID), "#{mac} was added."
+        robot.send robot.brain.userForId(userID), "#{mac} was added."
       else
         console.log "Fail to register: ip #{ip}, user_id #{userID}"
     .catch (err) ->
