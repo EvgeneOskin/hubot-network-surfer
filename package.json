@@ -31,6 +31,6 @@
     "coffee-script": "^1.10.0",
     "hubot-test-helper": "^1.4.4",
     "mocha": "^2.4.5",
-    "sinon": "^1.17.4"
+    "request-promise": "^3.0.0"
   }
 }
