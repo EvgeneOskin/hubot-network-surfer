@@ -10,4 +10,4 @@ You can test your hubot by running the following.
 
 You can start hubot-network-surfer locally by running:
 
-    % TRUST_PROXY=uniquelocal  EXPRESS_BIND_ADDRESS='192.168.0.105'  SURFER_SUBNET_WITH_MASK='192.168.0.0/24' ./bin/h
+    % TRUST_PROXY=uniquelocal  EXPRESS_BIND_ADDRESS='192.168.0.105'  SURFER_SUBNET_WITH_MASK='192.168.0.0/24' ./bin/hubot
