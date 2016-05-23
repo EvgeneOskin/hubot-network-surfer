@@ -1,8 +1,12 @@
 {
   "name": "hubot-network-surfer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "author": "EvgeneOskin <eoskin@crystalnix.com>",
+  "repository": {
+      "type" : "git",
+      "url" : "https://github.com/EvgeneOskin/hubot-network-surfer.git"
+  },
   "description": "A bot to get ping about the new user in office.",
   "scripts": {
     "test": "mocha --compilers coffee:coffee-script/register test",
